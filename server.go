@@ -38,4 +38,6 @@ func main() {
 	if err := e.Shutdown(ctx); err != nil {
 		e.Logger.Fatal(err)
 	}
+
+	expense.CloseDB()
 }
