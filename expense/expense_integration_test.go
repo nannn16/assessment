@@ -5,6 +5,7 @@ package expense
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -33,6 +34,37 @@ func TestCreateExpense(t *testing.T) {
 	assert.Equal(t, 39000.0, e.Amount)
 	assert.Equal(t, "buy a new phone", e.Note)
 	assert.Equal(t, []string{"gadget", "shopping"}, e.Tags)
+}
+
+func TestGetExpenseByID(t *testing.T) {
+	c := seedExpense(t)
+
+	var latest Expense
+	res := request(http.MethodGet, uri("expenses", fmt.Sprintf("%d", c.ID)), nil)
+	err := res.Decode(&latest)
+
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+	assert.Equal(t, c.ID, latest.ID)
+	assert.Equal(t, c.Title, latest.Title)
+	assert.Equal(t, c.Amount, latest.Amount)
+	assert.Equal(t, c.Note, latest.Note)
+	assert.Equal(t, c.Tags, latest.Tags)
+}
+
+func seedExpense(t *testing.T) Expense {
+	var c Expense
+	body := bytes.NewBufferString(`{
+		"title": "strawberry smoothie",
+		"amount": 79,
+		"note": "night market promotion discount 10 bath", 
+		"tags": ["food", "beverage"]
+	}`)
+	err := request(http.MethodPost, uri("expenses"), body).Decode(&c)
+	if err != nil {
+		t.Fatal("can't create uomer:", err)
+	}
+	return c
 }
 
 func uri(paths ...string) string {

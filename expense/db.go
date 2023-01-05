@@ -32,3 +32,10 @@ func InitDB() {
 		log.Fatal("can't create table", err)
 	}
 }
+
+func CloseDB() {
+	err := db.Close()
+	if err != nil {
+		log.Fatal("error closing db connection", err)
+	}
+}
