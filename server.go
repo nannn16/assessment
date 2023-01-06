@@ -22,6 +22,7 @@ func main() {
 
 	e.POST("/expenses", expense.CreateExpenseHandler)
 	e.GET("/expenses/:id", expense.GetExpenseHandler)
+	e.PUT("/expenses/:id", expense.UpdateExpenseHandler)
 
 	go func() {
 		err := e.Start(os.Getenv("PORT"))
@@ -38,6 +39,5 @@ func main() {
 	if err := e.Shutdown(ctx); err != nil {
 		e.Logger.Fatal(err)
 	}
-
 	expense.CloseDB()
 }

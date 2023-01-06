@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCreateExpense(t *testing.T) {
+func TestITCreateExpense(t *testing.T) {
 	body := bytes.NewBufferString(`{
 		"title": "buy a new phone",
 		"amount": 39000,
@@ -36,7 +36,7 @@ func TestCreateExpense(t *testing.T) {
 	assert.Equal(t, []string{"gadget", "shopping"}, e.Tags)
 }
 
-func TestGetExpenseByID(t *testing.T) {
+func TestITGetExpenseByID(t *testing.T) {
 	c := seedExpense(t)
 
 	var latest Expense
