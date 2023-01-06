@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/lib/pq"
 )
 
 func GetExpenseHandler(c echo.Context) error {
@@ -15,7 +16,7 @@ func GetExpenseHandler(c echo.Context) error {
 	}
 
 	e := Expense{}
-	row := stmt.QueryRow(id).Scan(&e.ID, &e.Title, &e.Amount, &e.Note, &e.Tags)
+	row := stmt.QueryRow(id).Scan(&e.ID, &e.Title, &e.Amount, &e.Note, pq.Array(&e.Tags))
 	switch row {
 	case sql.ErrNoRows:
 		return c.JSON(http.StatusNotFound, Err{Message: "expense not found"})
