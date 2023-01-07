@@ -17,12 +17,17 @@ func main() {
 
 	e := echo.New()
 
+	e.Use(middleware.BasicAuth(func(username, password string, c echo.Context) (bool, error) {
+		return true, nil
+	}))
+
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
 	e.POST("/expenses", expense.CreateExpenseHandler)
 	e.GET("/expenses/:id", expense.GetExpenseHandler)
 	e.PUT("/expenses/:id", expense.UpdateExpenseHandler)
+	e.GET("/expenses", expense.GetExpensesHandler)
 
 	go func() {
 		err := e.Start(os.Getenv("PORT"))

@@ -26,3 +26,28 @@ func GetExpenseHandler(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, Err{Message: err.Error()})
 	}
 }
+
+func GetExpensesHandler(c echo.Context) error {
+	stmt, err := db.Prepare("SELECT id, title, amount, note, tags FROM expenses ORDER BY id")
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, Err{Message: err.Error()})
+	}
+
+	rows, err := stmt.Query()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, Err{Message: err.Error()})
+	}
+
+	expenses := []Expense{}
+
+	for rows.Next() {
+		e := Expense{}
+		err := rows.Scan(&e.ID, &e.Title, &e.Amount, &e.Note, pq.Array(&e.Tags))
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, Err{Message: err.Error()})
+		}
+		expenses = append(expenses, e)
+	}
+
+	return c.JSON(http.StatusOK, expenses)
+}

@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -51,11 +52,7 @@ func TestCreateExpense(t *testing.T) {
     	"tags": ["beverage"]
 	}`)
 
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodPost, "/expenses", body)
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
+	c, rec := makeRequest(http.MethodPost, "/expenses", body)
 
 	// Act
 	err := CreateExpenseHandler(c)
@@ -63,7 +60,7 @@ func TestCreateExpense(t *testing.T) {
 	json.NewDecoder(rec.Body).Decode(&item)
 
 	// Assertions
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, http.StatusCreated, rec.Code)
 	assert.NotEqual(t, 0, item.ID)
 	assert.Equal(t, "apple smoothie", item.Title)
@@ -83,11 +80,7 @@ func TestGetExpenseByID(t *testing.T) {
 	var item Expense
 	createExpense(body, &item)
 
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodGet, "/expenses", nil)
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
+	c, rec := makeRequest(http.MethodGet, "/expenses", nil)
 	c.SetParamNames("id")
 	c.SetParamValues(fmt.Sprintf("%d", item.ID))
 
@@ -98,7 +91,7 @@ func TestGetExpenseByID(t *testing.T) {
 	var getItem Expense
 	json.NewDecoder(rec.Body).Decode(&getItem)
 
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, rec.Code)
 	assert.Equal(t, getItem.ID, item.ID)
 	assert.Equal(t, getItem.Title, item.Title)
@@ -124,11 +117,7 @@ func TestUpdateExpenseByID(t *testing.T) {
 		"note": "night market promotion discount 10 baht", 
 		"tags": ["food", "beverage"]
 	}`)
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodPut, "/expenses", updateBody)
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
+	c, rec := makeRequest(http.MethodPut, "/expenses", updateBody)
 	c.SetParamNames("id")
 	c.SetParamValues(fmt.Sprintf("%d", item.ID))
 
@@ -139,11 +128,38 @@ func TestUpdateExpenseByID(t *testing.T) {
 	var updateItem Expense
 	json.NewDecoder(rec.Body).Decode(&updateItem)
 
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, rec.Code)
 	assert.Equal(t, updateItem.ID, item.ID)
 	assert.Equal(t, "strawberry smoothie", updateItem.Title)
 	assert.Equal(t, 79.0, updateItem.Amount)
 	assert.Equal(t, "night market promotion discount 10 baht", updateItem.Note)
 	assert.Equal(t, []string{"food", "beverage"}, updateItem.Tags)
+}
+
+func TestGetAllExpense(t *testing.T) {
+	// Arrange
+	c, rec := makeRequest(http.MethodGet, "/expenses", nil)
+
+	// Act
+	err := GetExpensesHandler(c)
+
+	// Assertions
+	var items []Expense
+	json.NewDecoder(rec.Body).Decode(&items)
+
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	for _, item := range items {
+		assert.NotEqual(t, 0, item.ID)
+	}
+}
+
+func makeRequest(method, url string, body io.Reader) (echo.Context, *httptest.ResponseRecorder) {
+	e := echo.New()
+	req := httptest.NewRequest(method, url, body)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	return c, rec
 }
